@@ -28,6 +28,11 @@ list_laptops:
             echo "$$i.img\t- `scripts/describe $$i.iso`"; \
 	done
 	@echo
+	@echo The following make targets are the supported battery-only patches:
+	@echo
+	@for i in $(LIST_PATCHED_BO); do \
+            echo "$$i.img\t- `scripts/describe $$i.iso`"; \
+	done
 
 .PHONY: list_laptops
 
@@ -445,16 +450,35 @@ rule_FL2_insert_DEPS = scripts/ISO_copyFL2 # TODO - bat file
 # $@ is the CAP file to create
 # $< is the EXE file
 # $1 is the pattern to match CAP file in EXE file
-define rule_CAP_extract
+define rule_CAPx_extract
     innoextract $< -I $(1) -d $@.tmp
     mv `find $@.tmp -type f |head -1` $@
     touch $@
     rm -r $@.tmp
 endef
+rule_CAPx_extract_DEPS = # no extra local dependancies
+
+define rule_EXE_extract
+    $(call rule_CAPx_extract,$1)
+endef
+rule_EXE_extract_DEPS = # no extra local dependancies
+
+
+# Extract the CAP file from a ZIP image
+#
+# $@ is the CAP file to create
+# $< is the ZIP file
+# $1 is the pattern to match CAP file in ZIP file
+define rule_CAP_extract
+    $(eval CAPFILE := $(shell unzip -Z1 $< | grep -i $(1)))
+    unzip $< $(CAPFILE)
+    mv $(CAPFILE) $@
+    rm -r DOS/
+endef
 rule_CAP_extract_DEPS = # no extra local dependancies
 
 define rule_EXE_extract
-    $(call rule_CAP_extract,$1)
+    $(call rule_CAPx_extract,$1)
 endef
 rule_EXE_extract_DEPS = # no extra local dependancies
 
@@ -474,6 +498,11 @@ rule_EXE_extract_DEPS = # no extra local dependancies
 # $3 ZIP file where to take the DOS flash updater program from
 define rule_CAP_insert
     $(call buildinfo_ISO)
+
+# A normal .bat Rule doesn't work here, because there are multiple .CAP files in the .zip
+# Therefore re-extract here:
+    @sed -e "s%__DIR%.%; s%__FL2%$(1)%; s%/sd %/sd /sn %" autoexec.bat.template >$@.bat.tmp
+    @mv $@.bat.tmp $@.bat
 
     $(eval FAT_OFFSET := $(shell scripts/geteltorito -c $(2).orig 2>/dev/null))
     @cp --reflink=auto $(2).orig $@.tmp
