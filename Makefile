@@ -190,8 +190,9 @@ patch_disable_keyboard:
 %.iso.orig %.exe.orig %.zip.orig:
 	@echo -n "Downloading "
 	@scripts/describe $(basename $@)
-	@wget -nv -O $@ https://download.lenovo.com/pccbbs/mobiles/$(basename $@)
-	scripts/checksum --mv_on_fail $@ $(basename $@)
+	$(eval FILENAME := $(shell scripts/get_dlfile $(basename $@)))
+	@wget -nv -O $@ https://download.lenovo.com/pccbbs/mobiles/$(FILENAME)
+	scripts/checksum --mv_on_fail $@ $(FILENAME)
 	@touch $@
 
 # Download any README text file released alongside to ISO images.
@@ -277,7 +278,7 @@ patch_disable_keyboard:
 
 %.zip.extract: %.zip
 	unzip $^ -d $@
-%.zip.orig.extract: %.zip
+%.zip.orig.extract: %.zip.orig
 	unzip $^ -d $@
 %.exe.extract: %.exe
 	innoextract $^ -d $@

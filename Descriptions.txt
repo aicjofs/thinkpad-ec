@@ -27,6 +27,7 @@
 # Available tags names:
 #       sha1    - The value is the known sha1 of the file
 #       sha256  - The value is the known sha256 of the file
+#       linkto  - The file referenced here contains the real data
 #
 #       rule    - The basename of the make macro for this file
 #       param   - Any parameters that are needed to be passed to the macro
@@ -187,6 +188,8 @@ h6uja0wd.iso  sha1:19a05355c793b3f776c3130caa5f10e371f530c0 T430u BIOS 2.18 (H6E
 h9et75ww.zip  sha1:d81c145b371cf77abe6ae00d35d37491715feecd b590,b490 BIOS ?.? (H9ET75WW) EC 1.01 (H9EC08WW)
 h9et92ww.exe  sha1:c1a3ba9282fe48a9e6f69e4dd32537c10a710e78 b590,b490 BIOS ?.? (H9ET92WW) EC 1.02 (H9EC09WW)
 h9et92ww.zip  sha1:73cd66f584b8f981516ff4490d612c1a21384307 b590,b490 BIOS ?.? (H9ET92WW) EC 1.02 (H9EC09WW)
+h5et85ww.zip  linkto:h9et92ww.zip                           b590,b490 BIOS ?.? (H5ET85WW) EC 1.14 (H5EC34WW)
+h1et85ww.zip  linkto:h9et92ww.zip                           b590,b490 BIOS ?.? (H1ET85WW) EC 1.14 H1EC34WW
 heuj19wd.iso  sha1:0c060fa56828d09918ff51d61c26a5ec7f7bcff8 E431/E538 BIOS 1.33 (HEET52WW) EC 1.31 (HEHT50WW)
 n10ur10w.iso  sha1:0e4c4ffb99146e50867dc1345ee2ef88c60ea192 x250 BIOS 1.21 (N10ET42W) EC 1.16 (N10HT17W)
 n14ur15w.iso  sha1:e106b024b1d448234e5ea958b0e8e93bbda1a543 x1 Carbon (Type 20BS, 20BT) BIOS 1.16 (N14ET38W) EC 1.09 (N14HT36W)
@@ -237,6 +240,8 @@ j4uj75wd.iso  sha1:3ff5025a4a5f62f461467f7726e5b2c1fa119b5b L440, L540 BIOS 1.93
 # The firmware files from inside the ISO images
 b580.h1et73ww.s0AH1000.ROM  rule:EXE,dep:h1uj53us.exe,depi:h1uj53us.exe.bat1;g3uj13us.iso.orig,param:\$$0AH1000.FL1;g3uj13us.iso  b580 BIOS H1ET73WW Flash File
 b590.H9ET92WW.CAP           rule:CAP,dep:h9et92ww.zip;g3uj13us.iso.orig;h9et92ww.zip.orig,param:H9ET92WW.CAP;g3uj13us.iso;h9et92ww.zip  b590 BIOS H9ET75WW Flash File
+b590.H5ET85WW.CAP           rule:CAP,dep:h5et85ww.zip;g3uj13us.iso.orig;h5et85ww.zip.orig,param:H5ET85WW.CAP;g3uj13us.iso;h5et85ww.zip  b590 BIOS H5ET85WW Flash File
+b590.H1ET85WW.CAP           rule:CAP,dep:h1et85ww.zip;g3uj13us.iso.orig;h1et85ww.zip.orig,param:H1ET85WW.CAP;g3uj13us.iso;h1et85ww.zip  b590 BIOS H1ET85WW Flash File
 e330.H3EC35WW.s01H3000.FL1  rule:FL2,dep:h3uj76wd.iso,depi:h3uj76wd.iso.bat1;h3uj52wd.iso.orig,param:01H3000.FL1;h3uj52wd.iso e330 BIOS 1.16 Flash File
 l430.G3HT40WW.s01D4000.FL1  rule:FL2,dep:g3uj13us.iso,depi:g3uj13us.iso.bat1,param:01D4000.FL1 l430 BIOS 2.54 Flash File
 l440.J4HT27WW.s0AJ4000.FL1  rule:FL2,dep:j4uj62wd.iso,param:0AJ4000.FL1                        l440 BIOS 1.73 Flash File
@@ -298,6 +303,8 @@ x61.7MHT25WW.s01B2000.FL2   rule:oldISO,dep:7nuj22uc.iso,param:01B2000.FL2      
 # The actual EC firmware extracted from the BIOS firmware file
 b580.H1ET73WW.img     rule:IMGnuvoton,dep:b580.h1et73ww.s0AH1000.ROM  b580 EC 1.13 (not encrypted) (CR16CPlus cpu)
 b590.H9ET92WW.img     rule:IMGnuvoton,dep:b590.H9ET92WW.CAP         b590 EC 1.02 (not encrypted) (CR16CPlus cpu)
+b590.H5ET85WW.img     rule:IMGnuvoton,dep:b590.H5ET85WW.CAP         b590 EC 1.14 (not encrypted) (CR16CPlus cpu)
+b590.H1ET85WW.img     rule:IMGnuvoton,dep:b590.H1ET85WW.CAP         b590 EC 1.14 (not encrypted) (CR16CPlus cpu)
 e330.H3EC35WW.img     rule:IMGnuvoton,dep:e330.H3EC35WW.s01H3000.FL1  e330 EC 1.18 (not encrypted) (CR16CPlus cpu)
 l430.G3HT40WW.img     rule:IMGnuvoton,dep:l430.G3HT40WW.s01D4000.FL1  l430 EC 1.14 (not encrypted) (CR16CPlus cpu)
 l440.J4HT29WW.img     rule:IMGnoenc,dep:l440.J4HT29WW.s0AJ4000.FL1  l440 EC 1.10
@@ -346,7 +353,9 @@ x61.7MHT25WW.img      rule:IMGnoenc,dep:x61.7MHT25WW.s01B2000.FL2   x61 EC 1.03
 
 # The end-user visible, nicely named iso images
 patched.b580.iso   rule:niceISO,dep:h1uj53us.exe,suffix:0,insert:0  for patching Thinkpad B480, B580, V480, V480c, V580, V580c (Battery only)
-patched.b590.iso   rule:niceISO,dep:h9et92ww.zip,suffix:0,insert:0  for patching Thinkpad B490, B590 (Battery only)
+patched.b590.h9et92ww.iso   rule:niceISO,dep:h9et92ww.zip,suffix:0,insert:0  for patching Thinkpad B490, B590 BIOS H9ET92WW (Battery only)
+patched.b590.h5et85ww.iso   rule:niceISO,dep:h5et85ww.zip,suffix:0,insert:0  for patching Thinkpad B490, B590 BIOS H5ET85WW (Battery only)
+patched.b590.h1et85ww.iso   rule:niceISO,dep:h1et85ww.zip,suffix:0,insert:0  for patching Thinkpad B490, B590 BIOS H1ET85WW (Battery only)
 patched.e330.iso   rule:niceISO,dep:h3uj76wd.iso,suffix:0,insert:0  for patching Thinkpad E330, V480s (Battery only)
 patched.l430.iso   rule:niceISO,dep:g3uj13us.iso,suffix:0,insert:0  for patching Thinkpad L430, L530 (Battery only)
 patched.t430.iso   rule:niceISO,dep:g1uj48us.iso,suffix:0,insert:0  for patching Thinkpad T430
