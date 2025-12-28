@@ -113,6 +113,7 @@ build-deps:
 	    git \
 	    mtools \
 	    libssl-dev \
+	    liblzma-dev \
 	    build-essential \
 	    xorriso \
 	    unzip \
@@ -192,7 +193,7 @@ patch_disable_keyboard:
 	@scripts/describe $(basename $@)
 	$(eval FILENAME := $(shell scripts/get_dlfile $(basename $@)))
 	@wget -nv -O $@ https://download.lenovo.com/pccbbs/mobiles/$(FILENAME)
-	scripts/checksum --mv_on_fail $@ $(FILENAME)
+	scripts/checksum --mv_on_fail $@ $(notdir $(FILENAME))
 	@touch $@
 
 # Download any README text file released alongside to ISO images.
@@ -237,13 +238,24 @@ patch_disable_keyboard:
 	@sed -e "s%__DIR%`mdir -/ -b -i $<@@$(FAT_OFFSET) |grep FL1 |head -1|cut -d/ -f3`%; s%__FL2%`mdir -/ -b -i $<@@$(FAT_OFFSET) |grep FL1 |head -1|cut -d/ -f4`%" autoexec.bat.template >$@.tmp
 	@mv $@.tmp $(subst .bat1,.bat,$@)
 
-%.exe.bat: %.exe.orig autoexec.bat.template
-	@sed -e "s%__DIR%.%; s%__FL2%`basename \`innoextract -l $< | grep -i .CAP | cut -d'"' -f2\``%" autoexec.bat.template >$@.tmp
+%.exe.bat: %.exe.orig autoexec.bat.template lenovopack_unp
+	@set -eu; \
+	OUT=$$(./lenovo-tools/lenovopack_unp "$<"); \
+	if printf '%s\n' "$$OUT" | grep -qi '\.CAP'; then \
+		FL2=$$(printf '%s\n' "$$OUT" | grep -i '\.CAP' | head -n1 | cut -d' ' -f3); \
+	else \
+		FL2=$$(basename "$$(innoextract -l "$<" | grep -i '\.CAP' | cut -d'"' -f2)"); \
+	fi; \
+	sed -e "s%__DIR%.%; s%__FL2%$${FL2}%;" autoexec.bat.template >$@.tmp
 	@mv $@.tmp $@
 
 %.exe.bat1: %.exe.orig autoexec.bat.template
 	@sed -e "s%__DIR%.%; s%__FL2%`basename \`innoextract -l $< | grep -i .FL1 | cut -d'"' -f2\``%" autoexec.bat.template >$@.tmp
 	@mv $@.tmp $@
+
+# helper to extract Lenovo firmware .exe format which is not innosetup but $PACK
+lenovopack_unp:
+	$(CC) -o lenovo-tools/$@ lenovo-tools/lenovopack_unp.c -llzma
 
 # helper to write the ISO onto a cdrw
 %.iso.blank_burn: %.iso
@@ -281,9 +293,9 @@ patch_disable_keyboard:
 %.zip.orig.extract: %.zip.orig
 	unzip $^ -d $@
 %.exe.extract: %.exe
-	innoextract $^ -d $@
+	./lenovo-tools/lenovopack_unp $^ $@ || innoextract $^ -d $@
 %.exe.orig.extract: %.exe.orig
-	innoextract $^ -d $@
+	./lenovo-tools/lenovopack_unp $^ $@ || innoextract $^ -d $@
 
 ## Use the system provided geteltorito script, if there is one
 #GETELTORITO := $(shell if type geteltorito >/dev/null; then echo geteltorito; else echo ./geteltorito; fi)
@@ -452,17 +464,17 @@ rule_FL2_insert_DEPS = scripts/ISO_copyFL2 # TODO - bat file
 # $< is the EXE file
 # $1 is the pattern to match CAP file in EXE file
 define rule_CAPx_extract
-    innoextract $< -I $(1) -d $@.tmp
+    ./lenovo-tools/lenovopack_unp $< $@.tmp $(1) || innoextract $< -I $(1) -d $@.tmp
     mv `find $@.tmp -type f |head -1` $@
     touch $@
     rm -r $@.tmp
 endef
-rule_CAPx_extract_DEPS = # no extra local dependancies
+rule_CAPx_extract_DEPS = lenovopack_unp
 
 define rule_EXE_extract
     $(call rule_CAPx_extract,$1)
 endef
-rule_EXE_extract_DEPS = # no extra local dependancies
+rule_EXE_extract_DEPS = lenovopack_unp
 
 
 # Extract the CAP file from a ZIP image
@@ -477,11 +489,6 @@ define rule_CAP_extract
     rm -r DOS/
 endef
 rule_CAP_extract_DEPS = # no extra local dependancies
-
-define rule_EXE_extract
-    $(call rule_CAPx_extract,$1)
-endef
-rule_EXE_extract_DEPS = # no extra local dependancies
 
 # TODO:
 # - the following two rule_CAP_insert and rule_EXE_insert replicate a lot of
@@ -566,7 +573,10 @@ define rule_EXE_insert
 
     cp --reflink=auto $< $<.tmp
     cp --reflink=auto $@.report $@.report.tmp
-    cp --reflink=auto $@.bat1 $@.bat.tmp
+    cp --reflink=auto $(if $(wildcard $@.bat1),$@.bat1,$@.bat) $@.bat.tmp
+    @if [ -f "$@.bat" ]; then \
+      sed -i -e "s%/sd %/sd /sn %" $@.bat.tmp; \
+    fi
     touch --date="1980-01-01 00:00:01Z" $<.tmp $@.report.tmp $@.bat.tmp
     @# TODO - datestamp here could be the lastcommitdatestamp
 

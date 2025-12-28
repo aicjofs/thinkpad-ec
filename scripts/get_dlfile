@@ -22,10 +22,14 @@ fi
 SUM_FIELD=$(echo "$LINE" | awk '{print $2}')
 TYPE=$(echo "$SUM_FIELD" | cut -d: -f1)
 PARAM=$(echo "$SUM_FIELD" | cut -d: -f2 | tr '[:upper:]' '[:lower:]')
+IDEAPAD=$(echo "$LINE" | grep "Ideapad")
 
-# Hier die gewünschte Logik:
 if [ "$TYPE" = "linkto" ] && [ -n "$PARAM" ]; then
     echo "$PARAM"
 else
-    echo "$FILE"
+   if [ ! -z "$IDEAPAD" ]; then
+       echo "../../consumer/mobiles/$FILE"
+   else
+       echo "$FILE"
+   fi
 fi
