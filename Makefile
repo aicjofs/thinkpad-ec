@@ -574,9 +574,6 @@ define rule_EXE_insert
     cp --reflink=auto $< $<.tmp
     cp --reflink=auto $@.report $@.report.tmp
     cp --reflink=auto $(if $(wildcard $@.bat1),$@.bat1,$@.bat) $@.bat.tmp
-    @if [ -f "$@.bat" ]; then \
-      sed -i -e "s%/sd %/sd /sn %" $@.bat.tmp; \
-    fi
     touch --date="1980-01-01 00:00:01Z" $<.tmp $@.report.tmp $@.bat.tmp
     @# TODO - datestamp here could be the lastcommitdatestamp
 
